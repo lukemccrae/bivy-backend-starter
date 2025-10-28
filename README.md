@@ -2,7 +2,7 @@
 
 A minimal AWS CDK + Lambda starter project for receiving and handling webhooks / device payloads from a Bivy Stick device.
 
-![bivy stick](https://bivystick.com/wp-content/uploads/2024/05/bivy-Mesh-BNG77-768x905.jpg "Bivy Stick")
+![bivy stick](https://i.imgur.com/BELojZj.png "Bivy Stick")
 
 This repository provides a tiny example stack that deploys:
 - A Node.js Lambda function (handler exported as `index.handler`)
