@@ -52,11 +52,3 @@ Where to customize
 - Add your processing logic in `src/bivyWebhookLambda/handler.ts` in the BIVY case block.
 - Adjust IAM permissions in `lib/bivy-backend-starter-stack.ts` to grant least privilege for any AWS services the Lambda needs.
 
-Notes about sources
-- Repository details and implementation notes are based on the included files (lib/ and src/).
-- The device feature summary above is taken from the device description provided alongside this request.
-
-Next steps (suggestions)
-- Add a bundler (esbuild/webpack) or npm script to produce the Lambda artifact automatically.
-- Add persistence (DynamoDB / RDS), authentication, and message validation.
-- Add tests and CloudWatch logging/metrics for production readiness.
