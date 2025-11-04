@@ -1,0 +1,470 @@
+{
+    "info": {
+      "name": "Bivy Stick Web API",
+      "_postman_id": "bivy-stick-web-api-{{collection_id}}",
+      "description": "Postman collection for the Bivy Stick Web API (based on the API spec inside this repo). Use this collection to create an API account, register IMEIs, push messages/data, and to send test events (webhook simulations). \n\nHow to use:\n1. Clone this repo and deploy your webhook (for example your API Gateway + Lambda) and copy the publicly accessible webhook URL.\n2. Open Postman and import this collection (File > Import > Link/File).\n3. Create an environment (or use Postman's Globals) and set the following variables as needed:\n   - base_url (default: https://www.bivygate.com/bivystickapi) - the target Bivy API endpoint for POST calls\n   - webHookURL - your webhook endpoint (e.g. https://xyz.execute-api.us-east-1.amazonaws.com/prod/)\n   - webHookToken - a token you create to validate webhook calls (createAccount will accept the token you provide)\n   - email, password, companyName, senderId - account creation fields\n   - apiKey - will be set automatically on Create Account / Retrieve Key responses (can be overwritten)\n   - imei - example IMEI to test device-related calls\n   - messageId - optional message id to receive webHook callbacks\n   - lat, lng, elevation - defaults for test location\n\nNotes:\n- All endpoints in this API are POST calls to {{base_url}}.\n- The collection includes Tests scripts that will automatically store apiKey and webHookToken into the active environment when available.\n\nIf you want to register this repo's Lambda webhook as your webHookURL, paste its endpoint into the webHookURL environment variable before running Create Account / Update Account.",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "https://www.bivygate.com/bivystickapi"
+      },
+      {
+        "key": "webHookURL",
+        "value": ""
+      },
+      {
+        "key": "webHookToken",
+        "value": "REPLACE_WITH_YOUR_TOKEN"
+      },
+      {
+        "key": "email",
+        "value": "you@example.com"
+      },
+      {
+        "key": "password",
+        "value": "ChangeMe123!"
+      },
+      {
+        "key": "companyName",
+        "value": "My Company"
+      },
+      {
+        "key": "senderId",
+        "value": "MySender"
+      },
+      {
+        "key": "apiKey",
+        "value": ""
+      },
+      {
+        "key": "imei",
+        "value": "123456789012345"
+      },
+      {
+        "key": "messageId",
+        "value": "msg-001"
+      },
+      {
+        "key": "lat",
+        "value": "45.0000"
+      },
+      {
+        "key": "lng",
+        "value": "-122.0000"
+      },
+      {
+        "key": "elevation",
+        "value": "0"
+      }
+    ],
+    "item": [
+      {
+        "name": "Account / Create Account",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"createAccount\",\n  \"companyName\": \"{{companyName}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"webHookToken\": \"{{webHookToken}}\",\n  \"senderId\": \"{{senderId}}\",\n  \"webHookURL\": \"{{webHookURL}}\",\n  \"webHookAcceptMessages\": true,\n  \"webHookAcceptLocation\": true\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Create a new API account. This returns an apiKey used for subsequent calls. Set webHookURL to your system's webhook to receive incoming events (messages/location)."
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "try {",
+                "  const json = pm.response.json();",
+                "  pm.test('Response is success', function () {",
+                "    pm.expect(json.success).to.eql(true);",
+                "  });",
+                "  if (json.success && json.result && json.result.apiKey) {",
+                "    pm.environment.set('apiKey', json.result.apiKey);",
+                "    console.log('Saved apiKey to environment');",
+                "  }",
+                "  // Some implementations might also return webHookToken back",
+                "  if (json.success && json.result && json.result.webHookToken) {",
+                "    pm.environment.set('webHookToken', json.result.webHookToken);",
+                "    console.log('Saved webHookToken to environment');",
+                "  }",
+                "} catch (e) {",
+                "  console.error('Failed to parse response', e);",
+                "  pm.test('Response parseable JSON', () => pm.expect(false).to.be.true);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Account / Retrieve API Key",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"retrieveKey\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Retrieve the API key for an existing account using email and password. Useful if you lost the apiKey."
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "try {",
+                "  const json = pm.response.json();",
+                "  pm.test('Response is success', function () {",
+                "    pm.expect(json.success).to.eql(true);",
+                "  });",
+                "  if (json.success && json.result && json.result.apiKey) {",
+                "    pm.environment.set('apiKey', json.result.apiKey);",
+                "    console.log('Saved apiKey to environment');",
+                "  }",
+                "  if (json.success && json.result && json.result.webHookToken) {",
+                "    pm.environment.set('webHookToken', json.result.webHookToken);",
+                "    console.log('Saved webHookToken to environment');",
+                "  }",
+                "} catch (e) {",
+                "  console.error('Failed to parse response', e);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Account / Get Account",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"getAccount\",\n  \"apiKey\": \"{{apiKey}}\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Fetch information about the API account associated with apiKey."
+        },
+        "response": []
+      },
+      {
+        "name": "Account / Update Account",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"updateAccount\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"companyName\": \"{{companyName}}\",\n  \"senderId\": \"{{senderId}}\",\n  \"webHookURL\": \"{{webHookURL}}\",\n  \"webHookToken\": \"{{webHookToken}}\",\n  \"webHookAcceptMessages\": true,\n  \"webHookAcceptLocation\": true\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Update account settings. Use this to set the webHookURL to your deployed webhook or to change the senderId."
+        },
+        "response": []
+      },
+      {
+        "name": "IMEI / Validate IMEI",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"validateIMEI\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEI\": \"{{imei}}\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Validate if an IMEI is well-formed and known to the Bivy system."
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "try {",
+                "  const json = pm.response.json();",
+                "  pm.test('Response is success', function () {",
+                "    pm.expect(json.success).to.eql(true);",
+                "  });",
+                "  if (json.success && json.result) {",
+                "    console.log('IMEI valid:', json.result.valid);",
+                "    pm.environment.set('imeiValid', String(json.result.valid));",
+                "  }",
+                "} catch (e) {",
+                "  console.error('Failed to parse response', e);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }
+        ]
+      },
+      {
+        "name": "IMEI / Register / Unregister IMEI",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"registerIMEI\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEI\": \"{{imei}}\",\n  \"register\": true\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Register or unregister an IMEI with your API account. Set register=false to unregister."
+        },
+        "response": []
+      },
+      {
+        "name": "IMEI / Get IMEI Status",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"getIMEIStatus\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEI\": \"{{imei}}\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Get current permissions/status for an IMEI registered to your account."
+        },
+        "response": []
+      },
+      {
+        "name": "Push / Push Message",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"pushMessage\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEIs\": [\"{{imei}}\"],\n  \"message\": \"Hello from Postman\",\n  \"messageId\": \"{{messageId}}\",\n  \"nonCritical\": false\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Queue a message to be pushed to one or more IMEIs. If messageId is provided, the webhook will be called after the message is sent (webhook call will include webHookToken and messageId)."
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "try {",
+                "  const json = pm.response.json();",
+                "  pm.test('Push Message success', function () {",
+                "    pm.expect(json.success).to.eql(true);",
+                "  });",
+                "} catch (e) {",
+                "  console.error('Failed to parse response', e);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }
+        ]
+      },
+      {
+        "name": "Push / Push Data (base64)",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"pushData\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEIs\": [\"{{imei}}\"],\n  \"base64Data\": \"SGVsbG8sIGRhdGEh\",\n  \"messageId\": \"{{messageId}}\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Push opaque base64-encoded data to an IMEI. Intended for apps using the mobile SDK. Data must be <= 160 bytes decoded."
+        },
+        "response": []
+      },
+      {
+        "name": "Device / Device Command",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"deviceCommand\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEIs\": [\"{{imei}}\"],\n  \"type\": \"checkin\",\n  \"messageId\": \"{{messageId}}\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Send a device command (checkin/startTracking/stopTracking/etc.). Some commands require additional parameters (interval) and specific firmware versions."
+        },
+        "response": []
+      },
+      {
+        "name": "Test / Test Receive Message (simulate webhook incoming message)",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"testReceiveMessage\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEI\": \"{{imei}}\",\n  \"message\": \"Test message to webhook\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Simulate an incoming message from a Bivy Stick user. The Bivy platform will call your registered webHookURL with the webhook payload format (webHookToken, IMEI, type: \"message\", time, message). Useful to validate your webhook handler."
+        },
+        "response": []
+      },
+      {
+        "name": "Test / Test Receive Location (simulate webhook incoming location)",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"testReceiveLocation\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEI\": \"{{imei}}\",\n  \"lat\": \"{{lat}}\",\n  \"lng\": \"{{lng}}\",\n  \"elevation\": \"{{elevation}}\"\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Simulate an incoming location event from a device. Your webHookURL will receive the webhook body with type: \"location\" including webHookToken, IMEI, time, lat, lng, elevation."
+        },
+        "response": []
+      },
+      {
+        "name": "Test / Test IMEI Status Changed",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"operation\": \"testIMEIStatusChanged\",\n  \"apiKey\": \"{{apiKey}}\",\n  \"IMEI\": \"{{imei}}\",\n  \"registered\": true,\n  \"messagesEnabled\": true,\n  \"locationEnabled\": true,\n  \"active\": true\n}"
+          },
+          "url": {
+            "raw": "{{base_url}}",
+            "host": [
+              "{{base_url}}"
+            ]
+          },
+          "description": "Simulate a permissions/status change for an IMEI. The webhook will include type: \"IMEIStatusChanged\"."
+        },
+        "response": []
+      }
+    ]
+  }
